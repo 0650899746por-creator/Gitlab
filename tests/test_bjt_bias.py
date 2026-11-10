@@ -1,5 +1,7 @@
 import pytest
 
+import math
+
 from bjt_bias import parse_inputs
 
 VALID = {
@@ -143,3 +145,13 @@ def test_analyze_saturation_region_and_warning():
     assert result["region_label"] == "Saturation region"
     assert any("saturation" in warning.lower() for warning in result["warnings"])
     assert result["display"]["vce_v"] == "-1.765"
+
+
+def test_analyze_keeps_large_finite_inputs_finite():
+    result = analyze(1e308, 47000, 10000, 2200, 470, 150, 0.7)
+    assert all(math.isfinite(value) for value in result["values"].values())
+
+
+def test_analyze_rejects_overflowing_result():
+    with pytest.raises(ValueError, match="overflowed"):
+        analyze(1e308, 1, 1e308, 2200, 1e-300, 150, 0.7)

@@ -26,7 +26,10 @@ def create_app() -> Flask:
                 form[field] = request.form.get(field, "")
             values, errors = bjt_bias.parse_inputs(request.form)
             if values is not None:
-                result = bjt_bias.analyze(**values)
+                try:
+                    result = bjt_bias.analyze(**values)
+                except ValueError as error:
+                    errors.append(str(error))
 
         return render_template("index.html", form=form, errors=errors, result=result)
 

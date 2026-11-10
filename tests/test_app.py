@@ -35,12 +35,42 @@ def test_post_valid_shows_computed_values(client):
 
 
 def test_post_invalid_shows_error_without_results(client):
-    html = client.post("/", data={**VALID, "vcc": "0"}).get_data(as_text=True)
+    response = client.post("/", data={**VALID, "vcc": "0"})
+    html = response.get_data(as_text=True)
+    assert response.status_code == 200
     assert "VCC must be greater than zero" in html
     assert "Operating point" not in html
 
 
+def test_post_cutoff_shows_warning(client):
+    response = client.post("/", data={**VALID, "r2": "1000"})
+    html = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert "Cut-off region" in html
+    assert "cut off" in html.lower()
+
+
+def test_post_saturation_shows_warning(client):
+    response = client.post("/", data={**VALID, "rc": "4700"})
+    html = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert "Saturation region" in html
+    assert "saturation" in html.lower()
+
+
+def test_post_overflow_shows_error_without_results(client):
+    response = client.post(
+        "/",
+        data={**VALID, "vcc": "1e308", "r1": "1", "r2": "1e308", "re": "1e-300"},
+    )
+    html = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert "overflowed" in html
+    assert "Operating point" not in html
+
+
 def test_route_uses_backend_analyze(client, monkeypatch):
+    captured = {}
     fake = {
         "values": {
             "ib_a": 0.0, "ic_a": 0.0, "ie_a": 0.0,
@@ -57,9 +87,15 @@ def test_route_uses_backend_analyze(client, monkeypatch):
         "warnings": [],
         "verification": {"closed_form": {}, "nodal": {}, "max_abs_diff": 0.0, "passed": True},
     }
-    monkeypatch.setattr(app_module.bjt_bias, "analyze", lambda **kwargs: fake)
+
+    def fake_analyze(**kwargs):
+        captured.update(kwargs)
+        return fake
+
+    monkeypatch.setattr(app_module.bjt_bias, "analyze", fake_analyze)
     html = client.post("/", data=VALID).get_data(as_text=True)
     assert "999.999" in html
+    assert captured["vcc"] == 12.0
 
 
 def test_page_has_no_javascript(client):

@@ -59,8 +59,8 @@ def closed_form(
     vbe: float,
 ) -> dict[str, float]:
     """Solve the bias point with the Thevenin equivalent of the base divider."""
-    vbb = vcc * r2 / (r1 + r2)
-    rb = r1 * r2 / (r1 + r2)
+    vbb = vcc / (1.0 + r1 / r2)
+    rb = 1.0 / (1.0 / r1 + 1.0 / r2)
     ib = (vbb - vbe) / (rb + (beta + 1) * re)
     if ib <= 0:
         return {
@@ -121,8 +121,8 @@ def nodal(
     vbe: float,
 ) -> dict[str, float]:
     """Solve the same bias point from the 3-node system, without Thevenin."""
-    vbb = vcc * r2 / (r1 + r2)
-    rb = r1 * r2 / (r1 + r2)
+    vbb = vcc / (1.0 + r1 / r2)
+    rb = 1.0 / (1.0 / r1 + 1.0 / r2)
     matrix = [
         [1.0, -1.0, 0.0],
         [-1.0 / r1 - 1.0 / r2, 0.0, -1.0],
@@ -185,6 +185,10 @@ def analyze(
     """Compute the bias point with both solvers and report the operating region."""
     expected = closed_form(vcc, r1, r2, rc, re, beta, vbe)
     actual = nodal(vcc, r1, r2, rc, re, beta, vbe)
+    if not all(math.isfinite(value) for value in expected.values()) or not all(
+        math.isfinite(value) for value in actual.values()
+    ):
+        raise ValueError("Inputs are too large: the bias calculation overflowed.")
     max_abs_diff = max(abs(expected[key] - actual[key]) for key in expected)
     passed = all(
         abs(expected[key] - actual[key])
