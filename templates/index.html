@@ -11,6 +11,12 @@
     <h1>BJT Common-Emitter DC Bias</h1>
     <p class="subtitle">Voltage-divider bias — ENG29 2121</p>
 
+    <figure class="circuit">
+      <img src="{{ url_for('static', filename='circuit.svg') }}"
+           alt="Voltage-divider biased NPN common-emitter stage: R1 and R2 form the base divider, RC connects the collector to VCC, RE connects the emitter to ground.">
+      <figcaption>Voltage-divider bias, NPN common emitter</figcaption>
+    </figure>
+
     <form method="post" action="/">
       <div class="grid">
         {% for field, label, unit in [

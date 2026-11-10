@@ -101,3 +101,19 @@ def test_route_uses_backend_analyze(client, monkeypatch):
 def test_page_has_no_javascript(client):
     html = client.get("/").get_data(as_text=True)
     assert "<script" not in html.lower()
+
+
+def test_page_shows_circuit_figure(client):
+    html = client.get("/").get_data(as_text=True)
+    assert 'class="circuit"' in html
+    assert "circuit.svg" in html
+
+
+def test_circuit_asset_is_svg_with_labels(client):
+    response = client.get("/static/circuit.svg")
+    assert response.status_code == 200
+    assert "image/svg+xml" in response.headers["Content-Type"]
+    body = response.get_data(as_text=True)
+    assert "<svg" in body
+    for label in ("VCC", "R1", "R2", "RC", "RE", "VBE", "VCE", "beta"):
+        assert label in body

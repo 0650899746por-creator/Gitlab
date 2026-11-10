@@ -67,6 +67,7 @@ The page reports `max |Δ|` between the two and `PASS`/`FAIL` (relative toleranc
 - `bjt_bias.py` — parsing, validation, both solvers, region logic, formatting
 - `app.py` — Flask app factory and the single `/` route
 - `templates/index.html`, `static/style.css` — server-rendered UI, no JavaScript
+- `static/circuit.svg` — schematic of the voltage-divider-biased stage
 - `tests/test_bjt_bias.py` — logic, validation, region, and cross-check tests
 - `tests/test_app.py` — route tests, including proof that the backend computes
 - `electrical.py`, `test_electrical.py` — legacy DC (V, R) calculator, unused by

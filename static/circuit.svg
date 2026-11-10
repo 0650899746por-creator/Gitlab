@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 420" role="img" aria-labelledby="circuit-title circuit-desc">
+  <title id="circuit-title">Voltage-divider biased NPN common-emitter stage</title>
+  <desc id="circuit-desc">VCC feeds R1 and RC. R1 and R2 form the base divider, with R2 returning to ground. The base drives Q1, an NPN transistor whose emitter returns to ground through RE. VBE is the base-emitter drop and VCE is the collector-emitter voltage.</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#1f2933"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#2f6f9f"/>
+    </marker>
+  </defs>
+
+  <g fill="none" stroke="#1f2933" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- VCC rail -->
+    <path d="M140 50 H330"/>
+
+    <!-- R1: VCC to base node -->
+    <path d="M140 50 V95"/>
+    <rect x="128" y="95" width="24" height="60" fill="#ffffff"/>
+    <path d="M140 155 V210"/>
+
+    <!-- R2: base node to ground -->
+    <path d="M140 210 V240"/>
+    <rect x="128" y="240" width="24" height="60" fill="#ffffff"/>
+    <path d="M140 300 V380"/>
+
+    <!-- base lead -->
+    <path d="M140 210 H300"/>
+
+    <!-- RC: VCC to collector -->
+    <path d="M330 50 V60"/>
+    <rect x="318" y="60" width="24" height="60" fill="#ffffff"/>
+    <path d="M330 120 V165"/>
+
+    <!-- transistor body -->
+    <path d="M330 165 L300 195"/>
+    <path d="M300 180 V240" stroke-width="3"/>
+    <path d="M300 225 L330 255" marker-end="url(#arrow)"/>
+
+    <!-- RE: emitter to ground -->
+    <path d="M330 255 V310"/>
+    <rect x="318" y="310" width="24" height="60" fill="#ffffff"/>
+    <path d="M330 370 V380"/>
+
+    <!-- ground symbols -->
+    <path d="M118 380 H162"/>
+    <path d="M126 387 H154"/>
+    <path d="M134 394 H146"/>
+    <path d="M308 380 H352"/>
+    <path d="M316 387 H344"/>
+    <path d="M324 394 H336"/>
+
+    <!-- VCE measurement -->
+    <path d="M334 120 H391" stroke="#5b6b7b" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <path d="M334 255 H391" stroke="#5b6b7b" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <path d="M395 120 V255" marker-start="url(#arrow-blue)" marker-end="url(#arrow-blue)" stroke="#2f6f9f"/>
+  </g>
+
+  <!-- base junction dot -->
+  <circle cx="140" cy="210" r="3.5" fill="#1f2933"/>
+
+  <g font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="15" fill="#1f2933">
+    <text x="235" y="36" text-anchor="middle">VCC</text>
+    <text x="112" y="130" text-anchor="end">R1</text>
+    <text x="112" y="275" text-anchor="end">R2</text>
+    <text x="356" y="95">RC</text>
+    <text x="356" y="345">RE</text>
+    <text x="350" y="195">Q1</text>
+    <text x="296" y="243" text-anchor="end" fill="#5b6b7b" font-size="14">VBE</text>
+    <text x="408" y="192" fill="#2f6f9f" font-size="14">VCE</text>
+  </g>
+  <text x="350" y="217" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" fill="#5b6b7b">beta</text>
+</svg>
