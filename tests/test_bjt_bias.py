@@ -155,3 +155,28 @@ def test_analyze_keeps_large_finite_inputs_finite():
 def test_analyze_rejects_overflowing_result():
     with pytest.raises(ValueError, match="overflowed"):
         analyze(1e308, 1, 1e308, 2200, 1e-300, 150, 0.7)
+
+
+def test_parse_kilo_ohm_matches_ohm():
+    ohms, _ = parse_inputs(
+        {**VALID, "r1": "47000", "r2": "10000", "rc": "2200", "re": "470"},
+        {"r1": "Ω", "r2": "Ω", "rc": "Ω", "re": "Ω"},
+    )
+    kilos, errors = parse_inputs(
+        {**VALID, "r1": "47", "r2": "10", "rc": "2.2", "re": "0.47"},
+        {"r1": "kΩ", "r2": "kΩ", "rc": "kΩ", "re": "kΩ"},
+    )
+    assert errors == []
+    assert kilos == ohms
+
+
+def test_parse_rejects_unknown_unit():
+    values, errors = parse_inputs(VALID, {"r1": "MΩ"})
+    assert values is None
+    assert any("R1" in error and "unit" in error.lower() for error in errors)
+
+
+def test_parse_defaults_to_kilo_ohm_for_resistors():
+    values, errors = parse_inputs({**VALID, "r1": "47", "r2": "10", "rc": "2.2", "re": "0.47"})
+    assert errors == []
+    assert values["r1"] == pytest.approx(47000.0)

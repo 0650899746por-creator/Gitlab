@@ -13,12 +13,42 @@ LABELS = {
     "vbe": "VBE",
 }
 
+UNITS = {
+    "vcc": ("V",),
+    "r1": ("Ω", "kΩ"),
+    "r2": ("Ω", "kΩ"),
+    "rc": ("Ω", "kΩ"),
+    "re": ("Ω", "kΩ"),
+    "beta": ("",),
+    "vbe": ("V",),
+}
+
+UNIT_FACTORS = {"V": 1.0, "Ω": 1.0, "kΩ": 1000.0, "": 1.0}
+
+DEFAULT_UNITS = {
+    "vcc": "V",
+    "r1": "kΩ",
+    "r2": "kΩ",
+    "rc": "kΩ",
+    "re": "kΩ",
+    "beta": "",
+    "vbe": "V",
+}
+
 VCE_SAT_V = 0.2
 REL_TOL = 1e-9
 
 
-def parse_inputs(raw: Mapping[str, str]) -> tuple[dict[str, float] | None, list[str]]:
-    """Parse and validate the seven bias inputs, collecting every error."""
+def parse_inputs(
+    raw: Mapping[str, str],
+    units: Mapping[str, str] | None = None,
+) -> tuple[dict[str, float] | None, list[str]]:
+    """Parse and validate the seven bias inputs, collecting every error.
+
+    ``units`` overrides ``DEFAULT_UNITS``; resistor values are converted to
+    ohms and voltages stay in volts before validation.
+    """
+    resolved_units = {**DEFAULT_UNITS, **(units or {})}
     values: dict[str, float] = {}
     errors: list[str] = []
 
@@ -33,7 +63,11 @@ def parse_inputs(raw: Mapping[str, str]) -> tuple[dict[str, float] | None, list[
         if not math.isfinite(value):
             errors.append(f"{label} must be a finite number.")
             continue
-        values[field] = value
+        unit = resolved_units[field]
+        if unit not in UNITS[field]:
+            errors.append(f"{label} unit is not supported.")
+            continue
+        values[field] = value * UNIT_FACTORS[unit]
 
     if "vcc" in values and values["vcc"] <= 0:
         errors.append("VCC must be greater than zero.")
