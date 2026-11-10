@@ -13,6 +13,9 @@ LABELS = {
     "vbe": "VBE",
 }
 
+VCE_SAT_V = 0.2
+REL_TOL = 1e-9
+
 
 def parse_inputs(raw: Mapping[str, str]) -> tuple[dict[str, float] | None, list[str]]:
     """Parse and validate the seven bias inputs, collecting every error."""
@@ -152,4 +155,70 @@ def nodal(
         "vce_v": vc - _ve,
         "vbb_v": vbb,
         "rb_ohm": rb,
+    }
+
+
+def to_display(values: dict[str, float]) -> dict[str, str]:
+    """Format the numeric results with units for the page."""
+    return {
+        "ib_ua": f"{values['ib_a'] * 1e6:.3f}",
+        "ic_ma": f"{values['ic_a'] * 1e3:.3f}",
+        "ie_ma": f"{values['ie_a'] * 1e3:.3f}",
+        "vb_v": f"{values['vb_v']:.3f}",
+        "ve_v": f"{values['ve_v']:.3f}",
+        "vc_v": f"{values['vc_v']:.3f}",
+        "vce_v": f"{values['vce_v']:.3f}",
+        "vbb_v": f"{values['vbb_v']:.3f}",
+        "rb_ohm": f"{values['rb_ohm']:.3f}",
+    }
+
+
+def analyze(
+    vcc: float,
+    r1: float,
+    r2: float,
+    rc: float,
+    re: float,
+    beta: float,
+    vbe: float,
+) -> dict:
+    """Compute the bias point with both solvers and report the operating region."""
+    expected = closed_form(vcc, r1, r2, rc, re, beta, vbe)
+    actual = nodal(vcc, r1, r2, rc, re, beta, vbe)
+    max_abs_diff = max(abs(expected[key] - actual[key]) for key in expected)
+    passed = all(
+        abs(expected[key] - actual[key])
+        <= REL_TOL * max(1.0, abs(expected[key]), abs(actual[key]))
+        for key in expected
+    )
+
+    values = expected
+    if values["vbb_v"] <= vbe:
+        region = "cutoff"
+        region_label = "Cut-off region"
+        warnings = ["Transistor is cut off (VBB <= VBE): IB = IC = IE = 0."]
+    elif values["vce_v"] < VCE_SAT_V:
+        region = "saturation"
+        region_label = "Saturation region"
+        warnings = [
+            "Transistor is in saturation (VCE < 0.2 V); "
+            "the fixed-beta model is not valid."
+        ]
+    else:
+        region = "active"
+        region_label = "Active region"
+        warnings = []
+
+    return {
+        "values": values,
+        "display": to_display(values),
+        "region": region,
+        "region_label": region_label,
+        "warnings": warnings,
+        "verification": {
+            "closed_form": expected,
+            "nodal": actual,
+            "max_abs_diff": max_abs_diff,
+            "passed": passed,
+        },
     }
