@@ -58,3 +58,51 @@ def test_parse_rejects_non_finite():
     values, errors = parse_inputs({**VALID, "r1": "1e400"})
     assert values is None
     assert any("finite" in error.lower() for error in errors)
+
+
+from bjt_bias import closed_form, nodal
+
+
+def test_closed_form_known_values():
+    result = closed_form(12, 47000, 10000, 2200, 470, 150, 0.7)
+    assert result["ib_a"] == pytest.approx(1.77397243587898e-05, rel=1e-9)
+    assert result["ic_a"] == pytest.approx(0.0026609586538184696, rel=1e-9)
+    assert result["ie_a"] == pytest.approx(0.0026786983781772597, rel=1e-9)
+    assert result["ve_v"] == pytest.approx(1.2589882377433121, rel=1e-9)
+    assert result["vb_v"] == pytest.approx(1.958988237743312, rel=1e-9)
+    assert result["vc_v"] == pytest.approx(6.145890961599367, rel=1e-9)
+    assert result["vce_v"] == pytest.approx(4.886902723856055, rel=1e-9)
+    assert result["vbb_v"] == pytest.approx(2.1052631578947367, rel=1e-9)
+    assert result["rb_ohm"] == pytest.approx(8245.61403508772, rel=1e-9)
+
+
+def test_closed_form_cutoff_returns_zero_currents():
+    result = closed_form(12, 47000, 1000, 2200, 470, 150, 0.7)
+    assert result["ib_a"] == 0
+    assert result["ic_a"] == 0
+    assert result["ie_a"] == 0
+    assert result["vb_v"] == pytest.approx(0.25)
+    assert result["vc_v"] == 12
+    assert result["vce_v"] == 12
+
+
+def test_nodal_matches_closed_form():
+    cases = [
+        (12, 47000, 10000, 2200, 470, 150, 0.7),
+        (5, 10000, 2200, 1000, 100, 100, 0.65),
+        (15, 68000, 12000, 3300, 680, 200, 0.7),
+        (9, 22000, 4700, 1500, 330, 80, 0.6),
+        (24, 100000, 15000, 4700, 1000, 300, 0.7),
+    ]
+    for case in cases:
+        expected = closed_form(*case)
+        actual = nodal(*case)
+        for key in expected:
+            scale = max(1.0, abs(expected[key]), abs(actual[key]))
+            assert abs(expected[key] - actual[key]) <= 1e-9 * scale, key
+
+
+def test_nodal_cutoff_matches_closed_form():
+    result = nodal(12, 47000, 1000, 2200, 470, 150, 0.7)
+    assert result["ic_a"] == 0
+    assert result["vb_v"] == pytest.approx(0.25)
