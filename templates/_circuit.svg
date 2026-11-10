@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 420" class="circuit-svg" role="img" aria-labelledby="circuit-title circuit-desc">
+  <title id="circuit-title">Voltage-divider biased NPN common-emitter amplifier</title>
+  <desc id="circuit-desc">VCC feeds R1 and RC. R1 and R2 form the base divider. Q1 is an NPN transistor whose emitter returns to ground through RE. Values shown match the input form.</desc>
+
+  <defs>
+    <marker id="circuit-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#1f2933"/>
+    </marker>
+  </defs>
+
+  <g fill="none" stroke="#1f2933" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- VCC rail -->
+    <path d="M80 56 H240"/>
+
+    <!-- R1 -->
+    <path d="M80 56 V86"/>
+    <path d="M80 86 L90 91 L70 101 L90 111 L70 121 L90 131 L70 141 L80 146"/>
+    <path d="M80 146 V206"/>
+
+    <!-- R2 -->
+    <path d="M80 206 V236"/>
+    <path d="M80 236 L90 241 L70 251 L90 261 L70 271 L90 281 L70 291 L80 296"/>
+    <path d="M80 296 V376"/>
+
+    <!-- RC -->
+    <path d="M240 56 V86"/>
+    <path d="M240 86 L250 91 L230 101 L250 111 L230 121 L250 131 L230 141 L240 146"/>
+    <path d="M240 146 V170"/>
+
+    <!-- transistor body -->
+    <circle cx="215" cy="206" r="44" fill="#e6f4f7"/>
+    <path d="M80 206 H200"/>
+    <path d="M240 170 L200 191"/>
+    <path d="M200 176 V236" stroke-width="3"/>
+    <path d="M200 221 L240 246" marker-end="url(#circuit-arrow)"/>
+
+    <!-- RE -->
+    <path d="M240 246 V286"/>
+    <path d="M240 286 L250 291 L230 301 L250 311 L230 321 L250 331 L230 341 L240 346"/>
+    <path d="M240 346 V376"/>
+
+    <!-- grounds -->
+    <path d="M62 376 H98"/>
+    <path d="M70 383 H90"/>
+    <path d="M78 390 H82"/>
+    <path d="M222 376 H258"/>
+    <path d="M230 383 H250"/>
+    <path d="M238 390 H242"/>
+  </g>
+
+  <!-- base junction -->
+  <circle cx="80" cy="206" r="3" fill="#1f2933"/>
+
+  <g font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" fill="#1f2933">
+    <text x="160" y="34" text-anchor="middle" font-weight="600">VCC = {{ circuit.vcc }}</text>
+
+    <text x="60" y="104" text-anchor="end" font-weight="600">R1</text>
+    <text x="60" y="122" text-anchor="end">{{ circuit.r1 }}</text>
+
+    <text x="60" y="254" text-anchor="end" font-weight="600">R2</text>
+    <text x="60" y="272" text-anchor="end">{{ circuit.r2 }}</text>
+
+    <text x="262" y="104" font-weight="600">RC</text>
+    <text x="262" y="122">{{ circuit.rc }}</text>
+
+    <text x="262" y="304" font-weight="600">RE</text>
+    <text x="262" y="322">{{ circuit.re }}</text>
+
+    <text x="268" y="196" font-weight="600">Q1</text>
+    <text x="268" y="214">NPN</text>
+    <text x="268" y="232">(β = {{ circuit.beta }})</text>
+  </g>
+</svg>

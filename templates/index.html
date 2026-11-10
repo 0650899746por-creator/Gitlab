@@ -3,79 +3,120 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BJT DC Bias Calculator</title>
+  <title>Lab 02: BJT DC Bias Web App</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <main>
-    <h1>BJT Common-Emitter DC Bias</h1>
-    <p class="subtitle">Voltage-divider bias — ENG29 2121</p>
-
-    <figure class="circuit">
-      <img src="{{ url_for('static', filename='circuit.svg') }}"
-           alt="Voltage-divider biased NPN common-emitter stage: R1 and R2 form the base divider, RC connects the collector to VCC, RE connects the emitter to ground.">
-      <figcaption>Voltage-divider bias, NPN common emitter</figcaption>
-    </figure>
-
-    <form method="post" action="/">
-      <div class="grid">
-        {% for field, label, unit in [
-          ("vcc", "VCC", "V"),
-          ("r1", "R1", "Ω"),
-          ("r2", "R2", "Ω"),
-          ("rc", "RC", "Ω"),
-          ("re", "RE", "Ω"),
-          ("beta", "beta", ""),
-          ("vbe", "VBE", "V")
-        ] %}
-        <label>
-          <span>{{ label }}{% if unit %} ({{ unit }}){% endif %}</span>
-          <input type="number" step="any" name="{{ field }}" value="{{ form[field] }}">
-        </label>
-        {% endfor %}
+  <header class="topbar">
+    <div class="brand">
+      <svg class="chip-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="6" y="6" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <rect x="9.5" y="9.5" width="5" height="5" rx="1" fill="currentColor"/>
+      </svg>
+      <div>
+        <h1>Lab 02: BJT DC Bias Web App</h1>
+        <p>ENG29 2121 – Common Emitter (Voltage Divider Bias)</p>
       </div>
-      <button type="submit">Calculate</button>
-    </form>
+    </div>
+    <div class="course-badge">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M9 7l-4 5 4 5M15 7l4 5-4 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Computer Programming for<br>Electrical Engineers</span>
+    </div>
+  </header>
 
-    {% if errors %}
-    <section class="errors">
-      <h2>Check your inputs</h2>
-      <ul>
-        {% for error in errors %}<li>{{ error }}</li>{% endfor %}
-      </ul>
+  <main class="layout">
+    <section class="card">
+      <h2>
+        <svg class="card-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+        Input Parameters
+      </h2>
+
+      <form method="post" action="/">
+        {% for field, label, kind in fields %}
+        <div class="field">
+          <label for="{{ field }}">{{ label|safe }}</label>
+          <input id="{{ field }}" name="{{ field }}" type="number" step="any" value="{{ form[field] }}">
+          {% if kind == "R" %}
+          <select name="unit_{{ field }}" aria-label="{{ field }} unit">
+            <option value="Ω"{% if units[field] == "Ω" %} selected{% endif %}>Ω</option>
+            <option value="kΩ"{% if units[field] == "kΩ" %} selected{% endif %}>kΩ</option>
+          </select>
+          {% elif kind == "V" %}
+          <select name="unit_{{ field }}" aria-label="{{ field }} unit">
+            <option value="V" selected>V</option>
+          </select>
+          {% else %}
+          <span class="unit-fixed" aria-hidden="true">–</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+        <button type="submit">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="4.5" y="3.5" width="15" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M8 7.5h8M8 11h2.5M13.5 11h2.5M8 14.5h2.5M13.5 14.5h2.5M8 18h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+          Calculate DC Bias
+        </button>
+      </form>
+
+      {% if errors %}
+      <div class="errors">
+        <ul>
+          {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
     </section>
-    {% endif %}
 
-    {% if result %}
-    <section class="results">
-      <h2>Operating point</h2>
-      <p class="region region-{{ result.region }}">{{ result.region_label }}</p>
+    <section class="card">
+      <h2>
+        <svg class="card-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M12 4.5v15M12 12l-4.5-3M12 12l4.5 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        Circuit: Common-Emitter Amplifier
+      </h2>
+      {% include "_circuit.svg" %}
+    </section>
 
-      <table>
-        <thead><tr><th>Quantity</th><th>Value</th></tr></thead>
+    <section class="card">
+      <h2>
+        <svg class="card-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 19V11M12 19V5M19 19v-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        DC Bias Results
+      </h2>
+
+      {% if result %}
+      <table class="results">
         <tbody>
-          <tr><td>I<sub>B</sub></td><td>{{ result.display.ib_ua }} µA</td></tr>
-          <tr><td>I<sub>C</sub></td><td>{{ result.display.ic_ma }} mA</td></tr>
-          <tr><td>I<sub>E</sub></td><td>{{ result.display.ie_ma }} mA</td></tr>
-          <tr><td>V<sub>B</sub></td><td>{{ result.display.vb_v }} V</td></tr>
-          <tr><td>V<sub>E</sub></td><td>{{ result.display.ve_v }} V</td></tr>
-          <tr><td>V<sub>C</sub></td><td>{{ result.display.vc_v }} V</td></tr>
-          <tr><td>V<sub>CE</sub></td><td>{{ result.display.vce_v }} V</td></tr>
-          <tr><td>V<sub>BB</sub> (hand calc)</td><td>{{ result.display.vbb_v }} V</td></tr>
-          <tr><td>R<sub>B</sub> (hand calc)</td><td>{{ result.display.rb_ohm }} Ω</td></tr>
+          <tr><td>V<sub>B</sub></td><td class="value">{{ result.display.vb_v }} V</td></tr>
+          <tr><td>V<sub>E</sub></td><td class="value">{{ result.display.ve_v }} V</td></tr>
+          <tr><td>V<sub>C</sub></td><td class="value">{{ result.display.vc_v }} V</td></tr>
+          <tr><td>V<sub>CE</sub></td><td class="value">{{ result.display.vce_v }} V</td></tr>
+          <tr><td>I<sub>B</sub></td><td class="value">{{ result.display.ib_ua }} µA</td></tr>
+          <tr><td>I<sub>C</sub></td><td class="value">{{ result.display.ic_ma }} mA</td></tr>
+          <tr><td>I<sub>E</sub></td><td class="value">{{ result.display.ie_ma }} mA</td></tr>
         </tbody>
       </table>
 
-      {% for warning in result.warnings %}
-      <p class="warning">{{ warning }}</p>
-      {% endfor %}
-
-      <p class="verification">
-        Closed form vs nodal: max |Δ| = {{ result.verification.max_abs_diff }}
-        {% if result.verification.passed %}<strong>PASS</strong>{% else %}<strong>FAIL</strong>{% endif %}
-      </p>
+      <div class="status status-{{ result.region }}">
+        <span class="status-icon" aria-hidden="true">{% if result.region == "active" %}✓{% else %}!{% endif %}</span>
+        <div>
+          <strong>{{ result.region_title }}</strong>
+          <p>{{ result.region_detail }}</p>
+        </div>
+      </div>
+      {% else %}
+      <p class="placeholder">Enter the values and press Calculate.</p>
+      {% endif %}
     </section>
-    {% endif %}
   </main>
 </body>
 </html>

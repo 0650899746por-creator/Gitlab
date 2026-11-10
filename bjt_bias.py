@@ -233,6 +233,7 @@ def analyze(
     if values["vbb_v"] <= vbe:
         region = "cutoff"
         region_label = "Cut-off region"
+        region_title = "Cut-off region"
         region_detail = (
             f"VBB = {values['vbb_v']:.2f} V ≤ VBE = {vbe:.2f} V "
             "(cut-off: no collector current)"
@@ -241,6 +242,7 @@ def analyze(
     elif values["vce_v"] < VCE_SAT_V:
         region = "saturation"
         region_label = "Saturation region"
+        region_title = "Saturation region"
         region_detail = (
             f"VCE = {display['vce_v']} V < 0.2 V (saturation: fixed-beta model not valid)"
         )
@@ -251,6 +253,7 @@ def analyze(
     else:
         region = "active"
         region_label = "Active region"
+        region_title = "Active region approximation OK"
         region_detail = (
             f"VCE = {display['vce_v']} V > 0.2 V (transistor in active region)"
         )
@@ -261,6 +264,7 @@ def analyze(
         "display": display,
         "region": region,
         "region_label": region_label,
+        "region_title": region_title,
         "region_detail": region_detail,
         "warnings": warnings,
         "verification": {

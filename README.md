@@ -24,26 +24,28 @@ Open <http://127.0.0.1:5000>.
 | Input | Meaning | Unit |
 |---|---|---|
 | `VCC` | supply voltage | V |
-| `R1` | upper base resistor | Ω |
-| `R2` | lower base resistor | Ω |
-| `RC` | collector resistor | Ω |
-| `RE` | emitter resistor | Ω |
+| `R1` | upper base resistor | Ω or kΩ |
+| `R2` | lower base resistor | Ω or kΩ |
+| `RC` | collector resistor | Ω or kΩ |
+| `RE` | emitter resistor | Ω or kΩ |
 | `beta` | transistor current gain | — |
 | `VBE` | base-emitter voltage drop | V |
 
 All inputs must be finite numbers. `VCC`, the resistors, and `beta` must be
 greater than zero; `0 <= VBE < VCC`. Every validation error is shown together.
+Resistor values are converted to ohms before the calculation, so `2.2 kΩ` and
+`2200 Ω` give the same answer.
 
 ## Outputs
 
-`IB` (µA), `IC` and `IE` (mA), `VB`, `VE`, `VC`, `VCE` (V), plus `VBB` and `RB`
-for the hand calculation.
+`VB`, `VE`, `VC`, `VCE` (V), `IB` (µA), `IC` and `IE` (mA), all to two decimal
+places. The page also draws the circuit with the entered values.
 
-Operating region:
+Operating region, shown as a coloured status box:
 
 - **Cut-off** when `VBB <= VBE` — currents are zero, `VB = VBB`, `VC = VCE = VCC`.
-- **Saturation** when `VCE < 0.2 V` — values are shown with a warning that the
-  fixed-`beta` model is not valid there.
+- **Saturation** when `VCE < 0.2 V` — a warning that the fixed-`beta` model is
+  not valid there.
 - **Active** otherwise.
 
 ## Two independent calculations
@@ -53,8 +55,8 @@ Operating region:
 2. **Nodal analysis** — solve the 3×3 system in `VB`, `VE`, `IB` directly with
    Gaussian elimination, without using the Thevenin reduction.
 
-The page reports `max |Δ|` between the two and `PASS`/`FAIL` (relative tolerance
-`1e-9`).
+`analyze` compares the two at a relative tolerance of `1e-9` and returns
+`passed`/`max_abs_diff`; the page no longer prints that line.
 
 ## Tests
 
