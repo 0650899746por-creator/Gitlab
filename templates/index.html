@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BJT DC Bias Calculator</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main>
+    <h1>BJT Common-Emitter DC Bias</h1>
+    <p class="subtitle">Voltage-divider bias — ENG29 2121</p>
+
+    <form method="post" action="/">
+      <div class="grid">
+        {% for field, label, unit in [
+          ("vcc", "VCC", "V"),
+          ("r1", "R1", "Ω"),
+          ("r2", "R2", "Ω"),
+          ("rc", "RC", "Ω"),
+          ("re", "RE", "Ω"),
+          ("beta", "beta", ""),
+          ("vbe", "VBE", "V")
+        ] %}
+        <label>
+          <span>{{ label }}{% if unit %} ({{ unit }}){% endif %}</span>
+          <input type="number" step="any" name="{{ field }}" value="{{ form[field] }}">
+        </label>
+        {% endfor %}
+      </div>
+      <button type="submit">Calculate</button>
+    </form>
+
+    {% if errors %}
+    <section class="errors">
+      <h2>Check your inputs</h2>
+      <ul>
+        {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if result %}
+    <section class="results">
+      <h2>Operating point</h2>
+      <p class="region region-{{ result.region }}">{{ result.region_label }}</p>
+
+      <table>
+        <thead><tr><th>Quantity</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>I<sub>B</sub></td><td>{{ result.display.ib_ua }} µA</td></tr>
+          <tr><td>I<sub>C</sub></td><td>{{ result.display.ic_ma }} mA</td></tr>
+          <tr><td>I<sub>E</sub></td><td>{{ result.display.ie_ma }} mA</td></tr>
+          <tr><td>V<sub>B</sub></td><td>{{ result.display.vb_v }} V</td></tr>
+          <tr><td>V<sub>E</sub></td><td>{{ result.display.ve_v }} V</td></tr>
+          <tr><td>V<sub>C</sub></td><td>{{ result.display.vc_v }} V</td></tr>
+          <tr><td>V<sub>CE</sub></td><td>{{ result.display.vce_v }} V</td></tr>
+          <tr><td>V<sub>BB</sub> (hand calc)</td><td>{{ result.display.vbb_v }} V</td></tr>
+          <tr><td>R<sub>B</sub> (hand calc)</td><td>{{ result.display.rb_ohm }} Ω</td></tr>
+        </tbody>
+      </table>
+
+      {% for warning in result.warnings %}
+      <p class="warning">{{ warning }}</p>
+      {% endfor %}
+
+      <p class="verification">
+        Closed form vs nodal: max |Δ| = {{ result.verification.max_abs_diff }}
+        {% if result.verification.passed %}<strong>PASS</strong>{% else %}<strong>FAIL</strong>{% endif %}
+      </p>
+    </section>
+    {% endif %}
+  </main>
+</body>
+</html>
