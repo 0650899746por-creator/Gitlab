@@ -193,17 +193,15 @@ def nodal(
 
 
 def to_display(values: dict[str, float]) -> dict[str, str]:
-    """Format the numeric results with units for the page."""
+    """Format the seven reported quantities with two decimals."""
     return {
-        "ib_ua": f"{values['ib_a'] * 1e6:.3f}",
-        "ic_ma": f"{values['ic_a'] * 1e3:.3f}",
-        "ie_ma": f"{values['ie_a'] * 1e3:.3f}",
-        "vb_v": f"{values['vb_v']:.3f}",
-        "ve_v": f"{values['ve_v']:.3f}",
-        "vc_v": f"{values['vc_v']:.3f}",
-        "vce_v": f"{values['vce_v']:.3f}",
-        "vbb_v": f"{values['vbb_v']:.3f}",
-        "rb_ohm": f"{values['rb_ohm']:.3f}",
+        "ib_ua": f"{values['ib_a'] * 1e6:.2f}",
+        "ic_ma": f"{values['ic_a'] * 1e3:.2f}",
+        "ie_ma": f"{values['ie_a'] * 1e3:.2f}",
+        "vb_v": f"{values['vb_v']:.2f}",
+        "ve_v": f"{values['ve_v']:.2f}",
+        "vc_v": f"{values['vc_v']:.2f}",
+        "vce_v": f"{values['vce_v']:.2f}",
     }
 
 
@@ -231,13 +229,21 @@ def analyze(
     )
 
     values = expected
+    display = to_display(values)
     if values["vbb_v"] <= vbe:
         region = "cutoff"
         region_label = "Cut-off region"
+        region_detail = (
+            f"VBB = {values['vbb_v']:.2f} V ≤ VBE = {vbe:.2f} V "
+            "(cut-off: no collector current)"
+        )
         warnings = ["Transistor is cut off (VBB <= VBE): IB = IC = IE = 0."]
     elif values["vce_v"] < VCE_SAT_V:
         region = "saturation"
         region_label = "Saturation region"
+        region_detail = (
+            f"VCE = {display['vce_v']} V < 0.2 V (saturation: fixed-beta model not valid)"
+        )
         warnings = [
             "Transistor is in saturation (VCE < 0.2 V); "
             "the fixed-beta model is not valid."
@@ -245,13 +251,17 @@ def analyze(
     else:
         region = "active"
         region_label = "Active region"
+        region_detail = (
+            f"VCE = {display['vce_v']} V > 0.2 V (transistor in active region)"
+        )
         warnings = []
 
     return {
         "values": values,
-        "display": to_display(values),
+        "display": display,
         "region": region,
         "region_label": region_label,
+        "region_detail": region_detail,
         "warnings": warnings,
         "verification": {
             "closed_form": expected,

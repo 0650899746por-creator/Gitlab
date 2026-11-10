@@ -120,15 +120,13 @@ def test_analyze_example_active_and_verification_passes():
     assert result["warnings"] == []
     assert result["verification"]["passed"] is True
     assert result["verification"]["max_abs_diff"] <= 1e-9
-    assert result["display"]["ib_ua"] == "17.740"
-    assert result["display"]["ic_ma"] == "2.661"
-    assert result["display"]["ie_ma"] == "2.679"
-    assert result["display"]["vb_v"] == "1.959"
-    assert result["display"]["ve_v"] == "1.259"
-    assert result["display"]["vc_v"] == "6.146"
-    assert result["display"]["vce_v"] == "4.887"
-    assert result["display"]["vbb_v"] == "2.105"
-    assert result["display"]["rb_ohm"] == "8245.614"
+    assert result["display"]["ib_ua"] == "17.74"
+    assert result["display"]["ic_ma"] == "2.66"
+    assert result["display"]["ie_ma"] == "2.68"
+    assert result["display"]["vb_v"] == "1.96"
+    assert result["display"]["ve_v"] == "1.26"
+    assert result["display"]["vc_v"] == "6.15"
+    assert result["display"]["vce_v"] == "4.89"
 
 
 def test_analyze_cutoff_region_and_warning():
@@ -136,7 +134,7 @@ def test_analyze_cutoff_region_and_warning():
     assert result["region"] == "cutoff"
     assert result["region_label"] == "Cut-off region"
     assert any("cut off" in warning.lower() for warning in result["warnings"])
-    assert result["display"]["ic_ma"] == "0.000"
+    assert result["display"]["ic_ma"] == "0.00"
 
 
 def test_analyze_saturation_region_and_warning():
@@ -144,7 +142,7 @@ def test_analyze_saturation_region_and_warning():
     assert result["region"] == "saturation"
     assert result["region_label"] == "Saturation region"
     assert any("saturation" in warning.lower() for warning in result["warnings"])
-    assert result["display"]["vce_v"] == "-1.765"
+    assert result["display"]["vce_v"] == "-1.77"
 
 
 def test_analyze_keeps_large_finite_inputs_finite():
@@ -180,3 +178,23 @@ def test_parse_defaults_to_kilo_ohm_for_resistors():
     values, errors = parse_inputs({**VALID, "r1": "47", "r2": "10", "rc": "2.2", "re": "0.47"})
     assert errors == []
     assert values["r1"] == pytest.approx(47000.0)
+
+def test_to_display_uses_two_decimals():
+    result = analyze(12, 47000, 10000, 2200, 470, 150, 0.7)
+    assert result["display"]["ic_ma"] == "2.66"
+    assert result["display"]["vce_v"] == "4.89"
+    assert result["display"]["ib_ua"] == "17.74"
+    assert set(result["display"]) == {
+        "ib_ua", "ic_ma", "ie_ma", "vb_v", "ve_v", "vc_v", "vce_v",
+    }
+
+
+def test_analyze_region_detail_matches_region():
+    active = analyze(12, 47000, 10000, 2200, 470, 150, 0.7)
+    assert active["region_detail"].startswith("VCE = 4.89 V > 0.2 V")
+
+    cutoff = analyze(12, 47000, 1000, 2200, 470, 150, 0.7)
+    assert "no collector current" in cutoff["region_detail"].lower()
+
+    sat = analyze(12, 47000, 10000, 4700, 470, 150, 0.7)
+    assert "saturation" in sat["region_detail"].lower()
