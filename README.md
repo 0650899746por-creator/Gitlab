@@ -116,6 +116,5 @@ instead and the blocker is recorded in `docs/validation.md`.
 
 ## Git
 
-Commit SHA: `3290d1b` (integration branch `lab03-integrated`, based on the
-existing `Gitlab` repo so the original tests and `bjt_bias.py` are preserved).
-Push succeeded: https://github.com/0650899746por-creator/Gitlab/tree/lab03-integrated
+Commit SHA: `b982f5b` (pushed to `main`).
+GitHub URL: https://github.com/0650899746por-creator/Gitlab
