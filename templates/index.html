@@ -1,43 +1,68 @@
 <!doctype html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lab 02: BJT DC Bias Web App</title>
+  <title>Lab 03: BJT DC Bias Web App</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23103658'/%3E%3Cpath d='M16 7v18M9 11l7 5 7-5M9 21l7-5 7 5' fill='none' stroke='%2327c4b2' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <svg class="chip-icon" viewBox="0 0 24 24" aria-hidden="true">
-        <rect x="6" y="6" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
-        <path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        <rect x="9.5" y="9.5" width="5" height="5" rx="1" fill="currentColor"/>
-      </svg>
-      <div>
-        <h1>Lab 02: BJT DC Bias Web App</h1>
-        <p>ENG29 2121 – Common Emitter (Voltage Divider Bias)</p>
-      </div>
-    </div>
-    <div class="course-badge">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M9 7l-4 5 4 5M15 7l4 5-4 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span>Computer Programming for<br>Electrical Engineers</span>
-    </div>
-  </header>
+{% from "_circuit.html" import circuit as circuit_diagram %}
+<a class="skip-link" href="#calculator">ข้ามไปที่ฟอร์มคำนวณ</a>
 
-  <main class="layout">
-    <section class="card">
-      <h2>
-        <svg class="card-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/>
-          <path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-        </svg>
-        Input Parameters
-      </h2>
+<header class="hero">
+  <div class="wrap hero-inner">
+    <p class="eyebrow">ENG29 2121 · LAB 03 · BJT DC BIAS</p>
+    <h1>BJT DC Bias <span>Calculator</span></h1>
+    <p class="lead">เลือกวงจรไบอัสสามแบบ กรอกค่าตามหน่วย แล้วเทียบ I<sub>C</sub> กับ V<sub>CE</sub> จากสมการ Forward Active กับการคำนวณมือ</p>
+    <ul class="hero-facts" aria-label="ค่าคงที่ที่ใช้ร่วมกันในกรณีทดสอบ">
+      <li><span>V<sub>CC</sub></span> 12 V</li>
+      <li><span>R<sub>C</sub></span> 2.2 kΩ</li>
+      <li><span>β</span> 100</li>
+      <li><span>V<sub>BE</sub></span> 0.70 V</li>
+    </ul>
+    <p class="hero-meta">แบบจำลอง Forward Active · Flask + Python · ตรวจผลผ่าน Browser ด้วยตาราง A1–A5</p>
+  </div>
+</header>
+
+<main class="wrap" id="calculator">
+  <section class="card" aria-labelledby="mode-heading">
+    <header class="section-head">
+      <span class="step" aria-hidden="true">01</span>
+      <div>
+        <h2 id="mode-heading">เลือกวงจรไบอัส</h2>
+        <p class="hint">สลับโหมดแล้วหน้าเว็บจะโหลดใหม่ และแสดงเฉพาะช่องที่วงจรนั้นต้องใช้ (โหมดปัจจุบัน: <strong>{{ mode_label }}</strong>)</p>
+      </div>
+    </header>
+    <nav class="modes" aria-label="เลือกวงจรไบอัส">
+      {% for option in mode_options %}
+      <a class="mode-card{% if option.key == mode %} is-active{% endif %}"
+         href="{{ url_for('index', mode=option.key) }}"
+         {% if option.key == mode %}aria-current="page"{% endif %}>
+        <span class="mode-figure">{{ circuit_diagram(option.key) }}</span>
+        <span class="mode-text">
+          <span class="mode-name">{{ option.label }}</span>
+          <span class="mode-desc">{{ option.desc }}</span>
+        </span>
+        <span class="mode-mark" aria-hidden="true">{% if option.key == mode %}ใช้อยู่{% else %}เลือก{% endif %}</span>
+      </a>
+      {% endfor %}
+    </nav>
+  </section>
+
+  <div class="build">
+    <section class="card" aria-labelledby="input-heading">
+      <header class="section-head">
+        <span class="step" aria-hidden="true">02</span>
+        <div>
+          <h2 id="input-heading">กรอกค่าตามหน่วย</h2>
+          <p class="hint">โหมด <strong>{{ mode_label }}</strong> · แปลง kΩ → Ω ให้อัตโนมัติก่อนเข้าสมการ</p>
+        </div>
+      </header>
 
       <form method="post" action="/">
+        <input type="hidden" name="mode" value="{{ mode }}">
         {% for field, label, kind in fields %}
         <div class="field">
           <label for="{{ field }}">{{ label|safe }}</label>
@@ -56,13 +81,23 @@
           {% endif %}
         </div>
         {% endfor %}
-        <button type="submit">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="4.5" y="3.5" width="15" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/>
-            <path d="M8 7.5h8M8 11h2.5M13.5 11h2.5M8 14.5h2.5M13.5 14.5h2.5M8 18h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-          </svg>
-          Calculate DC Bias
-        </button>
+        {% if mode != "divider" %}
+        <div class="field">
+          <label for="rb">R<sub>B</sub> (Base Resistor)</label>
+          <input id="rb" name="rb" type="number" step="any" value="{{ form.rb }}">
+          <select name="unit_rb" aria-label="rb unit">
+            <option value="Ω"{% if units.rb == "Ω" %} selected{% endif %}>Ω</option>
+            <option value="kΩ"{% if units.rb == "kΩ" %} selected{% endif %}>kΩ</option>
+          </select>
+        </div>
+        {% endif %}
+        <div class="form-actions">
+          <button type="submit" class="primary">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 7h8M8 11h2M12 11h2M16 11h.01M8 15h2M12 15h2M16 15h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            Calculate DC Bias
+          </button>
+          <span class="tiny">เกณฑ์ตรวจ: I<sub>C</sub> ±0.01 mA · V<sub>CE</sub> ±0.02 V</span>
+        </div>
       </form>
 
       {% if errors %}
@@ -74,49 +109,79 @@
       {% endif %}
     </section>
 
-    <section class="card">
-      <h2>
-        <svg class="card-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
-          <path d="M12 4.5v15M12 12l-4.5-3M12 12l4.5 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
-        Circuit: Common-Emitter Amplifier
-      </h2>
-      {% include "_circuit.svg" %}
-    </section>
+    <aside class="circuit-panel" aria-label="วงจรไบอัสที่เลือกและสมการ">
+      <div class="circuit-canvas">{% include "_circuit.svg" %}</div>
+      <p class="circuit-name">{{ mode_label }}</p>
+      <p class="formula">{{ formula }}</p>
+      <p class="tiny">ความต้านทานในฟอร์มเป็น kΩ/Ω — โปรแกรมแปลงเป็น Ω ก่อนเข้าสมการ</p>
+    </aside>
+  </div>
 
-    <section class="card">
-      <h2>
-        <svg class="card-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M5 19V11M12 19V5M19 19v-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-        </svg>
-        DC Bias Results
-      </h2>
-
-      {% if result %}
-      <table class="results">
-        <tbody>
-          <tr><td>V<sub>B</sub></td><td class="value">{{ result.display.vb_v }} V</td></tr>
-          <tr><td>V<sub>E</sub></td><td class="value">{{ result.display.ve_v }} V</td></tr>
-          <tr><td>V<sub>C</sub></td><td class="value">{{ result.display.vc_v }} V</td></tr>
-          <tr><td>V<sub>CE</sub></td><td class="value">{{ result.display.vce_v }} V</td></tr>
-          <tr><td>I<sub>B</sub></td><td class="value">{{ result.display.ib_ua }} µA</td></tr>
-          <tr><td>I<sub>C</sub></td><td class="value">{{ result.display.ic_ma }} mA</td></tr>
-          <tr><td>I<sub>E</sub></td><td class="value">{{ result.display.ie_ma }} mA</td></tr>
-        </tbody>
-      </table>
-
-      <div class="status status-{{ result.region }}">
-        <span class="status-icon" aria-hidden="true">{% if result.region == "active" %}✓{% else %}!{% endif %}</span>
-        <div>
-          <strong>{{ result.region_title }}</strong>
-          <p>{{ result.region_detail }}</p>
-        </div>
+  <section class="card" aria-labelledby="result-heading">
+    <header class="section-head">
+      <span class="step" aria-hidden="true">03</span>
+      <div>
+        <h2 id="result-heading">DC Bias Results <span class="badge">{{ mode_label }}</span></h2>
+        <p class="hint">คำนวณจากค่าที่ส่งในรอบนี้ · แบบจำลอง Forward Active (β และ V<sub>BE</sub> คงที่)</p>
       </div>
-      {% else %}
-      <p class="placeholder">Enter the values and press Calculate.</p>
-      {% endif %}
-    </section>
-  </main>
+    </header>
+
+    {% if result %}
+    {% if gauges %}
+    <div class="stats">
+      <div class="stat stat-primary">
+        <p class="stat-label">I<sub>C</sub> · กระแสสะสม</p>
+        <p class="stat-value">{{ "%.2f"|format(result['values']['ic_a'] * 1000) }}<span>mA</span></p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">V<sub>CE</sub> · แรงดันคร่อม C–E</p>
+        <p class="stat-value">{{ "%.2f"|format(result['values']['vce_v']) }}<span>V</span></p>
+      </div>
+    </div>
+    <div class="gauges">
+      <div class="gauge">
+        <div class="gauge-top"><span>V<sub>CE</sub> เทียบกับ V<sub>CC</sub></span><b>{{ "%.0f"|format(gauges.vce_pct) }}%</b></div>
+        <div class="track"><span style="width: {{ "%.1f"|format(gauges.vce_pct) }}%"></span></div>
+        <div class="gauge-scale"><span>0 V</span><span>{{ "%.0f"|format(gauges.vcc_v) }} V</span></div>
+      </div>
+      <div class="gauge">
+        <div class="gauge-top"><span>I<sub>C</sub> เทียบกับ I<sub>C(sat)</sub></span><b>{{ "%.0f"|format(gauges.ic_pct) }}%</b></div>
+        <div class="track track-ic"><span style="width: {{ "%.1f"|format(gauges.ic_pct) }}%"></span></div>
+        <div class="gauge-scale"><span>0</span><span>{{ "%.1f"|format(gauges.ic_sat_ma) }} mA</span></div>
+      </div>
+    </div>
+    <p class="tiny gauge-note">I<sub>C(sat)</sub> = V<sub>CC</sub> / R<sub>C</sub> ใช้เป็นสเกลอ้างอิงเท่านั้น</p>
+    {% endif %}
+    <table class="results">
+      <tbody>
+        <tr><td>V<sub>B</sub></td><td class="value">{{ result.display.vb_v }} V</td></tr>
+        <tr><td>V<sub>E</sub></td><td class="value">{{ result.display.ve_v }} V</td></tr>
+        <tr><td>V<sub>C</sub></td><td class="value">{{ result.display.vc_v }} V</td></tr>
+        <tr><td>V<sub>CE</sub></td><td class="value">{{ result.display.vce_v }} V</td></tr>
+        <tr><td>I<sub>B</sub></td><td class="value">{{ result.display.ib_ua }} µA</td></tr>
+        <tr><td>I<sub>C</sub></td><td class="value">{{ result.display.ic_ma }} mA</td></tr>
+        <tr><td>I<sub>E</sub></td><td class="value">{{ result.display.ie_ma }} mA</td></tr>
+      </tbody>
+    </table>
+
+    <div class="status status-{{ result.region }}">
+      <span class="status-icon" aria-hidden="true">{% if result.region == "active" %}✓{% else %}!{% endif %}</span>
+      <div>
+        <strong>{{ result.region_title }}</strong>
+        <p>{{ result.region_detail }}</p>
+      </div>
+    </div>
+    {% else %}
+    <p class="placeholder">Enter the values and press Calculate.</p>
+    {% endif %}
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p><strong>ENG29 2121</strong> Computer Programming for Electrical Engineers · Lab 03</p>
+    <p class="small">Flask + Python DC Bias Calculator · แบบจำลอง Forward Active สำหรับการเรียน</p>
+  </div>
+</footer>
 </body>
 </html>

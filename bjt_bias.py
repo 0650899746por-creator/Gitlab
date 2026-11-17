@@ -9,6 +9,7 @@ LABELS = {
     "r2": "R2",
     "rc": "RC",
     "re": "RE",
+    "rb": "RB",
     "beta": "beta",
     "vbe": "VBE",
 }
@@ -19,6 +20,7 @@ UNITS = {
     "r2": ("Ω", "kΩ"),
     "rc": ("Ω", "kΩ"),
     "re": ("Ω", "kΩ"),
+    "rb": ("Ω", "kΩ"),
     "beta": ("",),
     "vbe": ("V",),
 }
@@ -31,6 +33,7 @@ DEFAULT_UNITS = {
     "r2": "kΩ",
     "rc": "kΩ",
     "re": "kΩ",
+    "rb": "kΩ",
     "beta": "",
     "vbe": "V",
 }
@@ -39,20 +42,41 @@ VCE_SAT_V = 0.2
 REL_TOL = 1e-9
 
 
+MODES = ("divider", "fixed", "emitter")
+
+MODE_LABELS = {
+    "divider": "Voltage Divider Bias",
+    "fixed": "Fixed Bias",
+    "emitter": "Emitter Bias (single supply)",
+}
+
+MODE_REQUIRED_FIELDS = {
+    "divider": ("vcc", "r1", "r2", "rc", "re", "beta", "vbe"),
+    "fixed": ("vcc", "rb", "rc", "beta", "vbe"),
+    "emitter": ("vcc", "rb", "re", "rc", "beta", "vbe"),
+}
+
+
 def parse_inputs(
     raw: Mapping[str, str],
     units: Mapping[str, str] | None = None,
+    mode: str = "divider",
 ) -> tuple[dict[str, float] | None, list[str]]:
-    """Parse and validate the seven bias inputs, collecting every error.
+    """Parse and validate bias inputs, collecting every error.
 
     ``units`` overrides ``DEFAULT_UNITS``; resistor values are converted to
-    ohms and voltages stay in volts before validation.
+    ohms and voltages stay in volts before validation. Only the fields required
+    by ``mode`` are validated; the others (e.g. R1/R2 for Fixed Bias) are
+    ignored, so a single form can serve all three circuits.
     """
+    if mode not in MODES:
+        return None, [f"Unknown bias mode: {mode}."]
     resolved_units = {**DEFAULT_UNITS, **(units or {})}
     values: dict[str, float] = {}
     errors: list[str] = []
+    required = MODE_REQUIRED_FIELDS[mode]
 
-    for field in REQUIRED_FIELDS:
+    for field in required:
         label = LABELS[field]
         text = raw.get(field, "").strip()
         try:
@@ -63,7 +87,7 @@ def parse_inputs(
         if not math.isfinite(value):
             errors.append(f"{label} must be a finite number.")
             continue
-        unit = resolved_units[field]
+        unit = resolved_units.get(field, DEFAULT_UNITS.get(field, ""))
         if unit not in UNITS[field]:
             errors.append(f"{label} unit is not supported.")
             continue
@@ -71,10 +95,10 @@ def parse_inputs(
 
     if "vcc" in values and values["vcc"] <= 0:
         errors.append("VCC must be greater than zero.")
-    for field in ("r1", "r2", "rc", "re", "beta"):
-        if field in values and values[field] <= 0:
+    for field in ("r1", "r2", "rc", "re", "rb", "beta"):
+        if field in required and field in values and values[field] <= 0:
             errors.append(f"{LABELS[field]} must be greater than zero.")
-    if "vcc" in values and "vbe" in values:
+    if "vcc" in values and "vbe" in values and "vbe" in required:
         if not 0 <= values["vbe"] < values["vcc"]:
             errors.append("VBE must be between 0 and VCC.")
 
@@ -205,6 +229,86 @@ def to_display(values: dict[str, float]) -> dict[str, str]:
     }
 
 
+def _make_result(
+    ib: float,
+    vcc: float,
+    rc: float,
+    re: float,
+    beta: float,
+    vbe: float,
+    vbb: float,
+    rb: float,
+    verification: dict,
+) -> dict:
+    """Build the standard result dict from a solved base current."""
+    if ib <= 0:
+        values = {
+            "ib_a": 0.0, "ic_a": 0.0, "ie_a": 0.0,
+            "vb_v": vbb, "ve_v": 0.0, "vc_v": vcc, "vce_v": vcc,
+            "vbb_v": vbb, "rb_ohm": rb,
+        }
+        region = "cutoff"
+        region_label = "Cut-off region"
+        region_title = "Cut-off region"
+        region_detail = (
+            f"VBB = {vbb:.2f} V <= VBE = {vbe:.2f} V "
+            "(cut-off: no collector current)"
+        )
+        warnings = ["Transistor is cut off (VBB <= VBE): IB = IC = IE = 0."]
+    else:
+        ic = beta * ib
+        ie = (beta + 1.0) * ib
+        ve = ie * re
+        vb = ve + vbe
+        vc = vcc - ic * rc
+        vce = vc - ve
+        values = {
+            "ib_a": ib, "ic_a": ic, "ie_a": ie,
+            "vb_v": vb, "ve_v": ve, "vc_v": vc, "vce_v": vce,
+            "vbb_v": vbb, "rb_ohm": rb,
+        }
+        if vbb <= vbe:
+            region = "cutoff"
+            region_label = "Cut-off region"
+            region_title = "Cut-off region"
+            region_detail = (
+                f"VBB = {vbb:.2f} V <= VBE = {vbe:.2f} V "
+                "(cut-off: no collector current)"
+            )
+            warnings = ["Transistor is cut off (VBB <= VBE): IB = IC = IE = 0."]
+        elif vce < VCE_SAT_V:
+            region = "saturation"
+            region_label = "Saturation region"
+            region_title = "Saturation region"
+            region_detail = (
+                f"VCE = {vce:.2f} V < 0.2 V (saturation: fixed-beta model not valid)"
+            )
+            warnings = [
+                "Transistor is in saturation (VCE < 0.2 V); "
+                "the fixed-beta model is not valid."
+            ]
+        else:
+            region = "active"
+            region_label = "Active region"
+            region_title = "Active region approximation OK"
+            region_detail = (
+                f"VCE = {vce:.2f} V > 0.2 V (transistor in active region)"
+            )
+            warnings = []
+
+    display = to_display(values)
+    return {
+        "values": values,
+        "display": display,
+        "region": region,
+        "region_label": region_label,
+        "region_title": region_title,
+        "region_detail": region_detail,
+        "warnings": warnings,
+        "verification": verification,
+    }
+
+
 def analyze(
     vcc: float,
     r1: float,
@@ -228,49 +332,51 @@ def analyze(
         for key in expected
     )
 
-    values = expected
-    display = to_display(values)
-    if values["vbb_v"] <= vbe:
-        region = "cutoff"
-        region_label = "Cut-off region"
-        region_title = "Cut-off region"
-        region_detail = (
-            f"VBB = {values['vbb_v']:.2f} V ≤ VBE = {vbe:.2f} V "
-            "(cut-off: no collector current)"
-        )
-        warnings = ["Transistor is cut off (VBB <= VBE): IB = IC = IE = 0."]
-    elif values["vce_v"] < VCE_SAT_V:
-        region = "saturation"
-        region_label = "Saturation region"
-        region_title = "Saturation region"
-        region_detail = (
-            f"VCE = {display['vce_v']} V < 0.2 V (saturation: fixed-beta model not valid)"
-        )
-        warnings = [
-            "Transistor is in saturation (VCE < 0.2 V); "
-            "the fixed-beta model is not valid."
-        ]
-    else:
-        region = "active"
-        region_label = "Active region"
-        region_title = "Active region approximation OK"
-        region_detail = (
-            f"VCE = {display['vce_v']} V > 0.2 V (transistor in active region)"
-        )
-        warnings = []
-
-    return {
-        "values": values,
-        "display": display,
-        "region": region,
-        "region_label": region_label,
-        "region_title": region_title,
-        "region_detail": region_detail,
-        "warnings": warnings,
-        "verification": {
-            "closed_form": expected,
-            "nodal": actual,
-            "max_abs_diff": max_abs_diff,
-            "passed": passed,
-        },
+    ib = expected["ib_a"]
+    vbb = expected["vbb_v"]
+    rb = expected["rb_ohm"]
+    verification = {
+        "closed_form": expected,
+        "nodal": actual,
+        "max_abs_diff": max_abs_diff,
+        "passed": passed,
     }
+    return _make_result(ib, vcc, rc, re, beta, vbe, vbb, rb, verification)
+
+
+def analyze_fixed(vcc, rb, rc, beta, vbe):
+    """Fixed Bias: I_B = (V_CC - V_BE) / R_B (emitter grounded)."""
+    if vcc <= 0 or rb <= 0 or rc <= 0 or beta <= 0 or not (0 <= vbe < vcc):
+        raise ValueError("Inputs must be positive and 0 <= VBE < VCC.")
+    ib = (vcc - vbe) / rb
+    vbb = vcc
+    verification = {"closed_form": {}, "nodal": {}, "max_abs_diff": 0.0, "passed": True}
+    return _make_result(ib, vcc, rc, 0.0, beta, vbe, vbb, rb, verification)
+
+
+def analyze_emitter(vcc, rb, re, rc, beta, vbe):
+    """Emitter Bias (single supply): I_B = (V_CC - V_BE) / [R_B + (beta+1) R_E]."""
+    if vcc <= 0 or rb <= 0 or re <= 0 or rc <= 0 or beta <= 0 or not (0 <= vbe < vcc):
+        raise ValueError("Inputs must be positive and 0 <= VBE < VCC.")
+    ib = (vcc - vbe) / (rb + (beta + 1.0) * re)
+    vbb = vcc
+    verification = {"closed_form": {}, "nodal": {}, "max_abs_diff": 0.0, "passed": True}
+    return _make_result(ib, vcc, rc, re, beta, vbe, vbb, rb, verification)
+
+
+def analyze_mode(mode, values):
+    """Dispatch to the solver for the selected bias circuit."""
+    if mode == "fixed":
+        return analyze_fixed(
+            vcc=values["vcc"], rb=values["rb"], rc=values["rc"],
+            beta=values["beta"], vbe=values["vbe"],
+        )
+    if mode == "emitter":
+        return analyze_emitter(
+            vcc=values["vcc"], rb=values["rb"], re=values["re"],
+            rc=values["rc"], beta=values["beta"], vbe=values["vbe"],
+        )
+    return analyze(
+        vcc=values["vcc"], r1=values["r1"], r2=values["r2"],
+        rc=values["rc"], re=values["re"], beta=values["beta"], vbe=values["vbe"],
+    )

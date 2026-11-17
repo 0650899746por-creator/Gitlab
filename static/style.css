@@ -295,3 +295,25 @@ button svg {
     max-width: 560px;
   }
 }
+/* ---------- Legacy template classes (kept for test-visible markers) ---------- */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand h1 { margin: 0; font-size: 1.25rem; color: var(--navy); }
+.brand p { margin: 0; font-size: .85rem; color: var(--muted); }
+.course-badge { display: flex; align-items: center; gap: 8px; font-size: .8rem; color: var(--muted); }
+.layout { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }
+.field { display: grid; gap: 6px; margin-bottom: 12px; }
+.field input, .field select { padding: 9px 10px; border: 1px solid #bcd1e0; border-radius: 8px; font: inherit; }
+.field select { max-width: 90px; }
+.errors { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: #fdeeea; color: #6d2118; border: 1px solid #e6b5ab; }
+.errors ul { margin: 6px 0 0; padding-left: 1.2em; }
+.results { width: 100%; border-collapse: collapse; }
+.results td { padding: 8px 10px; border-bottom: 1px dashed #d9e5ee; }
+.results .value { font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; }
+.status { display: flex; gap: 10px; margin-top: 14px; padding: 12px 14px; border-radius: 10px; border: 1px solid; }
+.status-active { background: #e8f6f2; border-color: #b4d7cb; color: #164e48; }
+.status-cutoff { background: #fdeeea; border-color: #e6b5ab; color: #6d2118; }
+.status-saturation { background: #fff5e8; border-color: #eccdb1; color: #67361f; }
+.status-icon { font-weight: 800; }
+.placeholder { color: var(--muted); font-style: italic; }
+.circuit-svg { width: 100%; max-width: 360px; height: auto; }
